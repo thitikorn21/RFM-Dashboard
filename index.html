@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFM Customer Segmentation Dashboard (Full 13 Segments)</title>
+    <!-- Google Font: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- PapaParse for CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        /* Header Section */
+        header {
+            max-width: 1400px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid #e5e7eb;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 1.8rem;
+        }
+
+        p.subtitle {
+            margin: 0;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Upload Button Styling */
+        .upload-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .btn-upload {
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .upload-container input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-status {
+            font-size: 0.9rem;
+            color: #059669;
+            font-weight: 500;
+            min-height: 20px;
+        }
+
+        /* Charts Section */
+        .charts-container {
+            max-width: 1400px;
+            margin: 0 auto 30px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            height: 420px;
+            position: relative;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        /* Dashboard Grid (Cards) */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .seg-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 85%;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Definition Text */
+        .definition-box {
+            background-color: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #4b5563;
+            margin-bottom: 20px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            line-height: 1.4;
+            border: 1px solid #f3f4f6;
+        }
+
+        /* Main Metrics */
+        .main-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 20px;
+        }
+
+        .metric-group h4 {
+            margin: 0 0 6px 0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #9ca3af;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .metric-sub {
+            font-size: 0.85rem;
+            color: #059669; /* Green */
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .metric-group.right {
+            text-align: right;
+        }
+        
+        /* RFM Grid */
+        .rfm-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .rfm-box {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 12px 5px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .rfm-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .rfm-val {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        /* Icon Helper */
+        .icon-box {
+            background: rgba(255,255,255,0.25);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        /* --- Dynamic Color Classes (1-13) --- */
+        .bg-seq-1  { background: linear-gradient(135deg, #10b981 0%, #047857 100%); } /* Champion */
+        .bg-seq-2  { background: linear-gradient(135deg, #34d399 0%, #059669 100%); } /* Loyal */
+        .bg-seq-3  { background: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%); } /* Potential */
+        .bg-seq-4  { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); } 
+        .bg-seq-5  { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); }
+        .bg-seq-6  { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); } 
+        .bg-seq-7  { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); }
+        .bg-seq-8  { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); } /* At Risk? */
+        .bg-seq-9  { background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%); }
+        .bg-seq-10 { background: linear-gradient(135deg, #e879f9 0%, #c026d3 100%); } /* Can't lose */
+        .bg-seq-11 { background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%); } /* Lost? */
+        .bg-seq-12 { background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); }
+        .bg-seq-13 { background: linear-gradient(135deg, #9ca3af 0%, #4b5563 100%); } /* Grey */
+        
+        .bg-seq-default { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
+
+        @media (max-width: 900px) {
+            .charts-container { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .main-metrics { grid-template-columns: 1fr; text-align: left; }
+            .metric-group.right { text-align: left; }
+            .upload-container { width: 100%; }
+            .btn-upload { justify-content: center; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><i class="fas fa-chart-pie" style="color:#2563eb; margin-right:10px;"></i>RFM Analytics Dashboard</h1>
+        <p class="subtitle">ระบบวิเคราะห์และแสดงผลกลุ่มลูกค้าทั้ง 13 กลุ่ม (Real-time CSV Data)</p>
+        
+        <div class="controls">
+            <div class="upload-container">
+                <button class="btn-upload">
+                    <i class="fas fa-file-csv"></i> อัปโหลดไฟล์ CSV (13 Groups)
+                </button>
+                <input type="file" id="csvFile" accept=".csv" />
+            </div>
+            <div id="fileStatus" class="file-status">กรุณาอัปโหลดไฟล์ CSV เพื่อแสดงข้อมูลจริง</div>
+        </div>
+    </header>
+
+    <!-- Charts Section -->
+    <div class="charts-container">
+        <div class="chart-card">
+            <div class="chart-title">สัดส่วนลูกค้า (User Distribution)</div>
+            <div style="height: 340px; width: 100%;">
+                <canvas id="userChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">ยอดขายรวม (Revenue Share)</div>
+            <div style="height: 340px; width: 100%;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="dashboard-grid">
+        <!-- Cards will be injected here -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #9ca3af; background: white; border-radius: 16px; border: 2px dashed #e5e7eb;">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 48px; margin-bottom: 20px;"></i>
+            <h3>รอการอัปโหลดไฟล์ CSV</h3>
+            <p>กรุณาอัปโหลดไฟล์ที่มีข้อมูลครบทั้ง 13 กลุ่มเพื่อเริ่มการวิเคราะห์</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // สีสำหรับ 13 กลุ่ม (Hex Codes สำหรับ Chart.js)
+        const segmentColors = [
+            '#10b981', '#34d399', '#2dd4bf', '#06b6d4', '#38bdf8', 
+            '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#e879f9', 
+            '#fb7185', '#f472b6', '#9ca3af'
+        ];
+
+        const formatBaht = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(num);
+        const formatNum = (num) => new Intl.NumberFormat('th-TH').format(num);
+
+        // Function ระบุ Style ตามเลขนำหน้า (เช่น "1.Champion" -> ใช้สีที่ 1)
+        const getSegmentStyle = (segmentName) => {
+            const name = (segmentName || "").toString();
+            // พยายามหาเลขนำหน้า 1-13 (เช่น "1.", "10.")
+            const match = name.match(/^(\d+)/); 
+            let seq = 0;
+            
+            if (match && match[1]) {
+                seq = parseInt(match[1]);
+            }
+
+            // ถ้าหาเลขไม่เจอ ลอง map จากชื่อ (Fallback)
+            if (seq === 0) {
+                 if (name.includes('Champion')) seq = 1;
+                 else if (name.includes('Loyal')) seq = 2;
+                 else if (name.includes('New')) seq = 4;
+                 else seq = 13; // Default grey
+            }
+
+            // Ensure seq is within 1-13
+            if (seq < 1) seq = 13;
+            if (seq > 13) seq = 13;
+
+            return { 
+                class: `bg-seq-${seq}`, 
+                hex: segmentColors[seq-1],
+                icon: getIconBySeq(seq)
+            };
+        };
+
+        const getIconBySeq = (seq) => {
+            if(seq <= 1) return 'fa-trophy';
+            if(seq <= 3) return 'fa-heart';
+            if(seq <= 5) return 'fa-thumbs-up';
+            if(seq <= 7) return 'fa-star-half-alt';
+            if(seq <= 9) return 'fa-exclamation-triangle';
+            if(seq <= 11) return 'fa-ambulance';
+            return 'fa-user-slash';
+        }
+
+        // --- Chart Instances ---
+        let userChartInstance = null;
+        let revenueChartInstance = null;
+
+        const renderCharts = (data) => {
+            // Sort data by sequence number (1-13)
+            const sortedData = [...data].sort((a, b) => {
+                const numA = parseInt(a.segment) || 999;
+                const numB = parseInt(b.segment) || 999;
+                return numA - numB;
+            });
+
+            const labels = sortedData.map(d => d.segment);
+            // Handle string values in CSV (remove commas)
+            const parseVal = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g, '')) : v;
+            
+            const userCounts = sortedData.map(d => parseVal(d.Count_User_Segment));
+            const revenues = sortedData.map(d => parseVal(d.ValueSpend));
+            const bgColors = sortedData.map(d => getSegmentStyle(d.segment).hex);
+
+            // 1. User Chart (Horizontal Bar)
+            const ctxUser = document.getElementById('userChart').getContext('2d');
+            if (userChartInstance) userChartInstance.destroy();
+            
+            userChartInstance = new Chart(ctxUser, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Users',
+                        data: userCounts,
+                        backgroundColor: bgColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // 2. Revenue Chart (Doughnut)
+            const ctxRev = document.getElementById('revenueChart').getContext('2d');
+            if (revenueChartInstance) revenueChartInstance.destroy();
+
+            revenueChartInstance = new Chart(ctxRev, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: revenues,
+                        backgroundColor: bgColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const total = context.chart._metasets[context.datasetIndex].total;
+                                    const pct = ((val/total)*100).toFixed(1) + '%';
+                                    return ` ${formatBaht(val)} (${pct})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // --- Render Cards ---
+        const renderDashboard = (data) => {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = '';
+            
+            // เรียงลำดับข้อมูลตามเลขกลุ่ม (1 -> 13)
+            const sortedData = [...data].sort((a, b) => {
+                const numA = parseInt(a.segment) || 999;
+                const numB = parseInt(b.segment) || 999;
+                return numA - numB;
+            });
+
+            if(sortedData.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px;">ไม่พบข้อมูล Segment ที่ถูกต้อง</div>';
+                return;
+            }
+
+            sortedData.forEach(item => {
+                const segName = item.segment || "Unknown";
+                const style = getSegmentStyle(segName);
+                
+                // Helper to clean numbers from CSV (e.g. "1,000" -> 1000)
+                const safeFloat = (v) => {
+                    if (typeof v === 'number') return v;
+                    if (typeof v === 'string') return parseFloat(v.replace(/,/g,'')) || 0;
+                    return 0;
+                };
+
+                const users = safeFloat(item.Count_User_Segment);
+                const userPct = item.Percentage_User_Segment || "";
+                const spend = safeFloat(item.ValueSpend);
+                const spendPct = item.Percentage_ValueSpend || "";
+                
+                const avgR = item.Avg_R !== undefined ? Math.round(safeFloat(item.Avg_R)) : '-';
+                const medF = item.Median_F !== undefined ? Math.round(safeFloat(item.Median_F)) : '-';
+                const avgM = item.Avg_M !== undefined ? Math.round(safeFloat(item.Avg_M)) : '-';
+
+                const html = `
+                <div class="card">
+                    <div class="card-header ${style.class}">
+                        <span class="seg-name" title="${segName}">${segName}</span>
+                        <div class="icon-box"><i class="fas ${style.icon}"></i></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="definition-box" title="${item.definition || ''}">
+                            ${item.definition ? (item.definition.length > 90 ? item.definition.substring(0,90)+'...' : item.definition) : '-'}
+                        </div>
+                        
+                        <div class="main-metrics">
+                            <div class="metric-group">
+                                <h4>จำนวนลูกค้า</h4>
+                                <div class="metric-value">${formatNum(users)}</div>
+                                <div class="metric-sub">${userPct}</div>
+                            </div>
+                            <div class="metric-group right">
+                                <h4>ยอดขายรวม</h4>
+                                <div class="metric-value">${formatBaht(spend)}</div>
+                                <div class="metric-sub">${spendPct}</div>
+                            </div>
+                        </div>
+
+                        <div class="rfm-grid">
+                            <div class="rfm-box">
+                                <span class="rfm-label">Avg Recency</span>
+                                <span class="rfm-val">${avgR}</span>
+                            </div>
+                            <div class="rfm-box">
+                                <span class="rfm-label">Med Freq</span>
+                                <span class="rfm-val">${medF}</span>
+                            </div>
+                            <div class="rfm-box">
+                                <span class="rfm-label">Avg Monetary</span>
+                                <span class="rfm-val">${formatNum(avgM)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Update Status
+            document.getElementById('fileStatus').innerHTML = `<span style="color:#059669"><i class="fas fa-check-circle"></i> แสดงผลข้อมูลครบ ${sortedData.length} กลุ่มเรียบร้อยแล้ว</span>`;
+            document.getElementById('fileStatus').style.color = "#059669";
+        };
+
+        // --- Demo Data (1, 2, 9, 10 - Visible from snippet) ---
+        // ใส่เฉพาะตัวที่เห็นค่าจริง ส่วนที่เหลือจะรออัปโหลด
+        const initialData = [
+            { "segment": "1.Champion", "definition": "R_ซื้องวดล่าสุด, F_ซื้อบ่อยเกือบทุกงวด, M_เฉลี่ยกำลังซื้อต่องวดสูง", "Count_User_Segment": 287, "Percentage_User_Segment": "0.01%", "ValueSpend": 1424834880.00, "Percentage_ValueSpend": "3.93%", "Avg_R": 0, "Median_F": 55, "Avg_M": 991 },
+            { "segment": "2.Loyal", "definition": "R_ซื้องวดล่าสุด/หายไป1งวด, F_ซื้อบ่อย, M_สูง", "Count_User_Segment": 29641, "Percentage_User_Segment": "0.66%", "ValueSpend": 11528646015.00, "Percentage_ValueSpend": "31.84%", "Avg_R": 0, "Median_F": 39, "Avg_M": 180 },
+            { "segment": "9.About To Sleep", "definition": "R_หายไป2-3งวด, F_หลากหลาย, M_ต่ำ", "Count_User_Segment": 333932, "Percentage_User_Segment": "7.40%", "ValueSpend": 2149366275.00, "Percentage_ValueSpend": "5.94%", "Avg_R": 2, "Median_F": 11, "Avg_M": 4 },
+            { "segment": "10.Cannot Lose Them But Losing", "definition": "R_หายไป3งวด+, F_เคยซื้อบ่อย, M_สูง", "Count_User_Segment": 1468, "Percentage_User_Segment": "0.03%", "ValueSpend": 156813615.00, "Percentage_ValueSpend": "0.43%", "Avg_R": 31, "Median_F": 3, "Avg_M": 240 }
+        ];
+        
+        // เริ่มต้น: แสดงเฉพาะข้อมูลตัวอย่างที่เห็นชัด (หรือจะให้ว่างไว้ก็ได้)
+        // renderDashboard(initialData); 
+        // หมายเหตุ: เนื่องจากผู้ใช้ต้องการข้อมูลจริงครบ 13 กลุ่ม จึงให้รออัปโหลดไฟล์ดีกว่า เพื่อไม่ให้เกิดความสับสน
+
+        // --- Upload Logic ---
+        document.getElementById('csvFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            document.getElementById('fileStatus').innerText = "กำลังประมวลผลไฟล์...";
+
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: false, // ปิด auto type เพื่อจัดการ string ที่มี comma เอง
+                skipEmptyLines: true,
+                complete: function(results) {
+                    console.log("Raw CSV Data:", results.data);
+                    
+                    // Filter เอาเฉพาะแถวที่มีข้อมูล Segment
+                    const validData = results.data.filter(r => r.segment && r.segment.trim() !== "");
+                    
+                    if(validData.length > 0) {
+                        renderCharts(validData);
+                        renderDashboard(validData);
+                    } else {
+                        alert("ไม่พบข้อมูล Segment ในไฟล์ CSV กรุณาตรวจสอบ Format ไฟล์");
+                        document.getElementById('fileStatus').innerText = "Format ไฟล์ไม่ถูกต้อง";
+                    }
+                },
+                error: function(err) {
+                    alert("เกิดข้อผิดพลาดในการอ่านไฟล์: " + err.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
