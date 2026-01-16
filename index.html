@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFM Customer Segmentation Dashboard (AI Powered)</title>
+    <title>RFM Dashboard + AI Analyst (Updated)</title>
     <!-- Google Font: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <!-- PapaParse for CSV -->
@@ -22,7 +22,8 @@
             --text-primary: #111827;
             --text-secondary: #6b7280;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --ai-color: #8b5cf6; /* Violet for AI */
+            --ai-primary: #7c3aed; /* Violet */
+            --ai-light: #ede9fe;
         }
 
         body {
@@ -47,11 +48,10 @@
             overflow: hidden;
         }
 
-        /* AI Decoration in Header */
         header::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
+            top: 0; left: 0; right: 0; height: 5px;
             background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
         }
 
@@ -62,11 +62,7 @@
             font-size: 1.8rem;
         }
 
-        p.subtitle {
-            margin: 0;
-            color: var(--text-secondary);
-            font-weight: 300;
-        }
+        p.subtitle { margin: 0; color: var(--text-secondary); font-weight: 300; }
 
         .controls {
             margin-top: 25px;
@@ -76,7 +72,7 @@
             gap: 15px;
         }
 
-        /* Upload Button Styling */
+        /* Upload Button */
         .upload-container {
             position: relative;
             overflow: hidden;
@@ -99,30 +95,17 @@
             transition: all 0.2s;
         }
 
-        .btn-upload:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-        }
+        .btn-upload:hover { background-color: #1d4ed8; transform: translateY(-1px); }
 
         .upload-container input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
+            font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
         }
 
         .file-status {
-            font-size: 0.9rem;
-            color: #059669;
-            font-weight: 500;
-            min-height: 20px;
+            font-size: 0.9rem; color: #059669; font-weight: 500; min-height: 20px;
         }
 
-        /* --- AI Analyst Section --- */
+        /* --- AI Analyst Section (New Feature) --- */
         .ai-section {
             max-width: 1400px;
             margin: 0 auto 30px auto;
@@ -131,11 +114,14 @@
             box-shadow: var(--shadow);
             border: 1px solid #e5e7eb;
             overflow: hidden;
+            animation: fadeIn 0.5s ease-in-out;
         }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .ai-header {
             background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-            padding: 20px;
+            padding: 20px 25px;
             border-bottom: 1px solid #ddd6fe;
             display: flex;
             flex-wrap: wrap;
@@ -145,236 +131,102 @@
         }
 
         .ai-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #5b21b6;
+            display: flex; align-items: center; gap: 12px;
+            font-size: 1.25rem; font-weight: 600; color: #5b21b6;
+        }
+        
+        .ai-badge {
+            background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;
         }
 
         .ai-input-group {
-            display: flex;
-            gap: 10px;
-            flex-grow: 1;
-            max-width: 600px;
+            display: flex; gap: 10px; flex-grow: 1; max-width: 600px;
         }
 
         .ai-input {
-            flex-grow: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd6fe;
-            border-radius: 8px;
-            outline: none;
-            font-family: 'Kanit', sans-serif;
+            flex-grow: 1; padding: 10px 15px; border: 1px solid #ddd6fe; border-radius: 8px; outline: none; font-family: 'Kanit', sans-serif;
+            transition: border-color 0.2s;
         }
         
-        .ai-input:focus {
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
+        .ai-input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
 
         .btn-ai {
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.2s;
-            white-space: nowrap;
+            color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 500;
+            display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap;
         }
 
-        .btn-ai:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-        }
-
-        .btn-ai:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
+        .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
+        .btn-ai:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
 
         .ai-content {
-            padding: 30px;
-            min-height: 100px;
-            line-height: 1.7;
-            color: #374151;
-            font-size: 1rem;
+            padding: 30px; min-height: 120px; line-height: 1.7; color: #374151; font-size: 1rem;
+            background-color: #ffffff;
         }
 
-        .ai-placeholder {
-            text-align: center;
-            color: #9ca3af;
-            padding: 20px;
-        }
+        /* Markdown Styles within AI Result */
+        .ai-result h2 { color: #4c1d95; margin-top: 1.5em; margin-bottom: 0.5em; border-bottom: 2px solid #f3f4f6; padding-bottom: 5px; font-size: 1.4rem; }
+        .ai-result h3 { color: #5b21b6; margin-top: 1.2em; font-size: 1.2rem; }
+        .ai-result ul { padding-left: 20px; margin-bottom: 1em; }
+        .ai-result li { margin-bottom: 6px; }
+        .ai-result strong { color: #1e1b4b; font-weight: 600; }
+        .ai-result p { margin-bottom: 1em; }
 
-        /* Markdown Styles */
-        .ai-result h2, .ai-result h3 { color: #4c1d95; margin-top: 1.5em; }
-        .ai-result ul { padding-left: 20px; }
-        .ai-result li { margin-bottom: 8px; }
-        .ai-result strong { color: #1e1b4b; }
-        
-        /* Loading Animation */
+        /* Loader */
         .loader {
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid #8b5cf6;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white;
+            width: 18px; height: 18px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Charts Section */
+        /* Charts & Cards */
         .charts-container {
-            max-width: 1400px;
-            margin: 0 auto 30px auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            max-width: 1400px; margin: 0 auto 30px auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+        }
+        .chart-full { grid-column: 1 / -1; }
+        
+        .chart-card {
+            background: white; border-radius: 16px; padding: 24px; box-shadow: var(--shadow);
+            height: 420px; position: relative; border: 1px solid #e5e7eb;
         }
         
-        .chart-full { grid-column: 1 / -1; }
-
-        .chart-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            height: 420px;
-            position: relative;
-            border: 1px solid #e5e7eb;
-        }
-
-        .chart-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text-primary);
-            text-align: center;
-        }
-
-        /* Dashboard Grid (Cards) */
         .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 24px;
-            max-width: 1400px;
-            margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px; max-width: 1400px; margin: 0 auto;
         }
 
-        /* Card Component */
         .card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
+            background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
+            transition: transform 0.2s; border: 1px solid #e5e7eb; display: flex; flex-direction: column;
         }
-
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1); }
-
-        .card-header {
-            padding: 16px 20px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .seg-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 85%;
-        }
-
-        .card-body {
-            padding: 20px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Definition Text */
+        .card:hover { transform: translateY(-5px); }
+        
+        .card-header { padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .seg-name { font-size: 1.1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
+        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        
         .definition-box {
-            background-color: #f9fafb;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            color: #4b5563;
-            margin-bottom: 20px;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            line-height: 1.4;
-            border: 1px solid #f3f4f6;
+            background-color: #f9fafb; padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #4b5563;
+            margin-bottom: 20px; min-height: 50px; display: flex; align-items: center; border: 1px solid #f3f4f6;
         }
 
-        /* Main Metrics */
         .main-metrics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #f3f4f6;
-            padding-bottom: 20px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;
+            border-bottom: 1px solid #f3f4f6; padding-bottom: 20px;
         }
-
-        .metric-group h4 {
-            margin: 0 0 6px 0;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #9ca3af;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
+        .metric-group h4 { margin: 0 0 6px 0; font-size: 0.75rem; text-transform: uppercase; color: #9ca3af; }
         .metric-value { font-size: 1.35rem; font-weight: 600; color: #111827; }
-        .metric-sub { font-size: 0.85rem; color: #059669; font-weight: 500; margin-top: 2px; }
+        .metric-sub { font-size: 0.85rem; color: #059669; font-weight: 500; }
         .metric-group.right { text-align: right; }
         
-        /* RFM Grid */
-        .rfm-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-top: auto;
-        }
-
-        .rfm-box {
-            background-color: #f8fafc;
-            border-radius: 8px;
-            padding: 12px 5px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .rfm-label {
-            display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 4px; font-weight: 600; text-transform: uppercase;
-        }
+        .rfm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto; }
+        .rfm-box { background-color: #f8fafc; border-radius: 8px; padding: 12px 5px; text-align: center; border: 1px solid #e2e8f0; }
+        .rfm-label { display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 4px; font-weight: 600; }
         .rfm-val { display: block; font-size: 1.1rem; font-weight: 600; color: #334155; }
+        
+        .icon-box { background: rgba(255,255,255,0.25); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* Icon Helper */
-        .icon-box {
-            background: rgba(255,255,255,0.25);
-            width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
-        }
-
-        /* --- Dynamic Color Classes (1-13) --- */
+        /* Dynamic Colors */
         .bg-seq-1  { background: linear-gradient(135deg, #10b981 0%, #047857 100%); } 
         .bg-seq-2  { background: linear-gradient(135deg, #34d399 0%, #059669 100%); } 
         .bg-seq-3  { background: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%); } 
@@ -388,7 +240,6 @@
         .bg-seq-11 { background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%); } 
         .bg-seq-12 { background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); }
         .bg-seq-13 { background: linear-gradient(135deg, #9ca3af 0%, #4b5563 100%); } 
-        
         .bg-seq-default { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
 
         @media (max-width: 900px) {
@@ -396,19 +247,13 @@
             .ai-header { flex-direction: column; align-items: stretch; }
             .ai-input-group { max-width: 100%; }
         }
-        @media (max-width: 600px) {
-            .main-metrics { grid-template-columns: 1fr; text-align: left; }
-            .metric-group.right { text-align: left; }
-            .upload-container { width: 100%; }
-            .btn-upload { justify-content: center; width: 100%; }
-        }
     </style>
 </head>
 <body>
 
     <header>
         <h1><i class="fas fa-chart-pie" style="color:#2563eb; margin-right:10px;"></i>RFM Analytics Dashboard</h1>
-        <p class="subtitle">ระบบวิเคราะห์และแสดงผลกลุ่มลูกค้าทั้ง 13 กลุ่ม พร้อม AI Analyst</p>
+        <p class="subtitle">ระบบวิเคราะห์และแสดงผลกลุ่มลูกค้าทั้ง 13 กลุ่ม + AI Analyst</p>
         
         <div class="controls">
             <div class="upload-container">
@@ -421,23 +266,23 @@
         </div>
     </header>
 
-    <!-- AI Analyst Section -->
+    <!-- AI Analyst Section (ต้องมีส่วนนี้ครับ) -->
     <section class="ai-section">
         <div class="ai-header">
             <div class="ai-title">
-                <i class="fas fa-robot"></i> The AI Analyst (Gemini)
+                <i class="fas fa-robot"></i> The AI Analyst <span class="ai-badge">Gemini Powered</span>
             </div>
             <div class="ai-input-group">
-                <input type="password" id="apiKey" class="ai-input" placeholder="ใส่ Gemini API Key ที่นี่..." />
+                <input type="password" id="apiKey" class="ai-input" placeholder="ใส่ Gemini API Key ที่นี่เพื่อเริ่มวิเคราะห์..." />
                 <button id="btnAnalyze" class="btn-ai" disabled>
                     <i class="fas fa-magic"></i> วิเคราะห์ข้อมูลเชิงลึก
                 </button>
             </div>
         </div>
         <div id="aiResult" class="ai-content">
-            <div class="ai-placeholder">
+            <div style="text-align: center; color: #9ca3af; padding: 20px;">
                 <i class="fas fa-lightbulb" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>
-                อัปโหลดไฟล์ CSV และใส่ API Key เพื่อให้ AI ช่วยวิเคราะห์กลยุทธ์การตลาดจากข้อมูลจริงของคุณ
+                <p>1. อัปโหลดไฟล์ CSV ด้านบน<br>2. ใส่ Google Gemini API Key ในช่อง<br>3. กดปุ่มวิเคราะห์เพื่อรับคำแนะนำกลยุทธ์</p>
             </div>
         </div>
     </section>
@@ -445,19 +290,19 @@
     <!-- Charts Section -->
     <div class="charts-container">
         <div class="chart-card">
-            <div class="chart-title">สัดส่วนลูกค้า (User Distribution)</div>
+            <div style="text-align:center; font-weight:600; margin-bottom:15px;">สัดส่วนลูกค้า (User Distribution)</div>
             <div style="height: 340px; width: 100%;">
                 <canvas id="userChart"></canvas>
             </div>
         </div>
         <div class="chart-card">
-            <div class="chart-title">ยอดขายรวม (Revenue Share)</div>
+            <div style="text-align:center; font-weight:600; margin-bottom:15px;">ยอดขายรวม (Revenue Share)</div>
             <div style="height: 340px; width: 100%;">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
         <div class="chart-card chart-full">
-            <div class="chart-title">RFM Strategic Matrix (พฤติกรรมลูกค้า: Recency vs Frequency)</div>
+            <div style="text-align:center; font-weight:600; margin-bottom:15px;">RFM Strategic Matrix (Recency vs Frequency)</div>
             <div style="height: 360px; width: 100%;">
                 <canvas id="bubbleChart"></canvas>
             </div>
@@ -468,7 +313,6 @@
     </div>
 
     <div id="dashboard" class="dashboard-grid">
-        <!-- Cards will be injected here -->
         <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #9ca3af; background: white; border-radius: 16px; border: 2px dashed #e5e7eb;">
             <i class="fas fa-cloud-upload-alt" style="font-size: 48px; margin-bottom: 20px;"></i>
             <h3>รอการอัปโหลดไฟล์ CSV</h3>
@@ -476,7 +320,7 @@
     </div>
 
     <script>
-        // Global Data Store
+        // Global Data Store for AI
         let globalRFMData = [];
 
         // --- Configuration ---
@@ -494,21 +338,14 @@
             const match = name.match(/^(\d+)/); 
             let seq = 0;
             if (match && match[1]) seq = parseInt(match[1]);
-            
-            if (seq === 0) {
+            else {
                  if (name.includes('Champion')) seq = 1;
                  else if (name.includes('Loyal')) seq = 2;
                  else if (name.includes('New')) seq = 4;
                  else seq = 13; 
             }
-            if (seq < 1) seq = 13;
-            if (seq > 13) seq = 13;
-
-            return { 
-                class: `bg-seq-${seq}`, 
-                hex: segmentColors[seq-1],
-                icon: getIconBySeq(seq)
-            };
+            if (seq < 1) seq = 13; if (seq > 13) seq = 13;
+            return { class: `bg-seq-${seq}`, hex: segmentColors[seq-1], icon: getIconBySeq(seq) };
         };
 
         const getIconBySeq = (seq) => {
@@ -527,12 +364,7 @@
         let bubbleChartInstance = null;
 
         const renderCharts = (data) => {
-            const sortedData = [...data].sort((a, b) => {
-                const numA = parseInt(a.segment) || 999;
-                const numB = parseInt(b.segment) || 999;
-                return numA - numB;
-            });
-
+            const sortedData = [...data].sort((a, b) => (parseInt(a.segment)||999) - (parseInt(b.segment)||999));
             const labels = sortedData.map(d => d.segment);
             const parseVal = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g, '')) : (v || 0);
             
@@ -543,110 +375,36 @@
             // 1. User Chart
             const ctxUser = document.getElementById('userChart').getContext('2d');
             if (userChartInstance) userChartInstance.destroy();
-            
             userChartInstance = new Chart(ctxUser, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Users',
-                        data: userCounts,
-                        backgroundColor: bgColors,
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
-                    }
-                }
+                data: { labels: labels, datasets: [{ label: 'Users', data: userCounts, backgroundColor: bgColors, borderWidth: 1, borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
             });
 
             // 2. Revenue Chart
             const ctxRev = document.getElementById('revenueChart').getContext('2d');
             if (revenueChartInstance) revenueChartInstance.destroy();
-
             revenueChartInstance = new Chart(ctxRev, {
                 type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: revenues,
-                        backgroundColor: bgColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const val = context.raw;
-                                    const total = context.chart._metasets[context.datasetIndex].total;
-                                    const pct = ((val/total)*100).toFixed(1) + '%';
-                                    return ` ${formatBaht(val)} (${pct})`;
-                                }
-                            }
-                        }
-                    }
-                }
+                data: { labels: labels, datasets: [{ data: revenues, backgroundColor: bgColors, borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } } }
             });
 
             // 3. Bubble Chart
             const ctxBubble = document.getElementById('bubbleChart').getContext('2d');
             if (bubbleChartInstance) bubbleChartInstance.destroy();
-
             const maxRevenue = Math.max(...revenues);
             const bubbleData = sortedData.map(d => {
                 const rev = parseVal(d.ValueSpend);
-                const rVal = Math.sqrt(rev / maxRevenue) * 35 + 5; 
-                return {
-                    x: parseVal(d.Avg_R),
-                    y: parseVal(d.Median_F),
-                    r: rVal,
-                    _spend: rev,
-                    _segment: d.segment
-                };
+                return { x: parseVal(d.Avg_R), y: parseVal(d.Median_F), r: Math.sqrt(rev/maxRevenue)*35+5, _spend: rev, _segment: d.segment };
             });
 
             bubbleChartInstance = new Chart(ctxBubble, {
                 type: 'bubble',
-                data: {
-                    datasets: bubbleData.map((b, i) => ({
-                        label: b._segment,
-                        data: [b],
-                        backgroundColor: bgColors[i],
-                        borderColor: bgColors[i],
-                        borderWidth: 1
-                    }))
-                },
+                data: { datasets: bubbleData.map((b, i) => ({ label: b._segment, data: [b], backgroundColor: bgColors[i], borderColor: bgColors[i] })) },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const raw = context.raw;
-                                    return `${raw._segment}: R=${raw.x}, F=${raw.y}, Spend=${formatBaht(raw._spend)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { title: { display: true, text: 'Avg Recency' }, beginAtZero: true },
-                        y: { title: { display: true, text: 'Median Frequency' }, beginAtZero: true }
-                    }
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const raw = context.raw; return `${raw._segment}: R=${raw.x}, F=${raw.y}, Spend=${formatBaht(raw._spend)}`; } } } },
+                    scales: { x: { title: { display: true, text: 'Avg Recency' }, beginAtZero: true }, y: { title: { display: true, text: 'Median Frequency' }, beginAtZero: true } }
                 }
             });
         };
@@ -656,25 +414,17 @@
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
             
-            const sortedData = [...data].sort((a, b) => {
-                const numA = parseInt(a.segment) || 999;
-                const numB = parseInt(b.segment) || 999;
-                return numA - numB;
-            });
+            const sortedData = [...data].sort((a, b) => (parseInt(a.segment)||999) - (parseInt(b.segment)||999));
 
             if(sortedData.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px;">ไม่พบข้อมูล Segment ที่ถูกต้อง</div>';
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px;">ไม่พบข้อมูล Segment</div>';
                 return;
             }
 
             sortedData.forEach(item => {
                 const segName = item.segment || "Unknown";
                 const style = getSegmentStyle(segName);
-                const safeFloat = (v) => {
-                    if (typeof v === 'number') return v;
-                    if (typeof v === 'string') return parseFloat(v.replace(/,/g,'')) || 0;
-                    return 0;
-                };
+                const safeFloat = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g,'')) : (v || 0);
 
                 const users = safeFloat(item.Count_User_Segment);
                 const userPct = item.Percentage_User_Segment || "";
@@ -695,48 +445,25 @@
                         <div class="definition-box" title="${item.definition || ''}">
                             ${item.definition ? (item.definition.length > 90 ? item.definition.substring(0,90)+'...' : item.definition) : '-'}
                         </div>
-                        
                         <div class="main-metrics">
-                            <div class="metric-group">
-                                <h4>จำนวนลูกค้า</h4>
-                                <div class="metric-value">${formatNum(users)}</div>
-                                <div class="metric-sub">${userPct}</div>
-                            </div>
-                            <div class="metric-group right">
-                                <h4>ยอดขายรวม</h4>
-                                <div class="metric-value">${formatBaht(spend)}</div>
-                                <div class="metric-sub">${spendPct}</div>
-                            </div>
+                            <div class="metric-group"><h4>จำนวนลูกค้า</h4><div class="metric-value">${formatNum(users)}</div><div class="metric-sub">${userPct}</div></div>
+                            <div class="metric-group right"><h4>ยอดขายรวม</h4><div class="metric-value">${formatBaht(spend)}</div><div class="metric-sub">${spendPct}</div></div>
                         </div>
-
                         <div class="rfm-grid">
-                            <div class="rfm-box">
-                                <span class="rfm-label">Avg Recency</span>
-                                <span class="rfm-val">${avgR}</span>
-                            </div>
-                            <div class="rfm-box">
-                                <span class="rfm-label">Med Freq</span>
-                                <span class="rfm-val">${medF}</span>
-                            </div>
-                            <div class="rfm-box">
-                                <span class="rfm-label">Avg Monetary</span>
-                                <span class="rfm-val">${formatNum(avgM)}</span>
-                            </div>
+                            <div class="rfm-box"><span class="rfm-label">Recency</span><span class="rfm-val">${avgR}</span></div>
+                            <div class="rfm-box"><span class="rfm-label">Freq</span><span class="rfm-val">${medF}</span></div>
+                            <div class="rfm-box"><span class="rfm-label">Monetary</span><span class="rfm-val">${formatNum(avgM)}</span></div>
                         </div>
                     </div>
-                </div>
-                `;
+                </div>`;
                 container.innerHTML += html;
             });
 
-            document.getElementById('fileStatus').innerHTML = `<span style="color:#059669"><i class="fas fa-check-circle"></i> พร้อมวิเคราะห์ (13 กลุ่ม)</span>`;
-            document.getElementById('fileStatus').style.color = "#059669";
-            
-            // Enable AI Button if key exists
+            document.getElementById('fileStatus').innerHTML = `<span style="color:#059669"><i class="fas fa-check-circle"></i> พร้อมวิเคราะห์ (${sortedData.length} กลุ่ม)</span>`;
             checkAIReady();
         };
 
-        // --- AI Logic ---
+        // --- AI Logic (Gemini API) ---
         const btnAnalyze = document.getElementById('btnAnalyze');
         const apiKeyInput = document.getElementById('apiKey');
         const aiResultDiv = document.getElementById('aiResult');
@@ -753,65 +480,44 @@
             const apiKey = apiKeyInput.value.trim();
             if (!apiKey || globalRFMData.length === 0) return;
 
-            // UI Loading
             btnAnalyze.disabled = true;
             btnAnalyze.innerHTML = '<div class="loader"></div> กำลังวิเคราะห์...';
-            aiResultDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#6b7280;">กำลังเชื่อมต่อ Gemini เพื่อวิเคราะห์ข้อมูลของคุณ...</div>';
+            aiResultDiv.innerHTML = '<div style="text-align:center; padding:30px; color:#6b7280;">กำลังเชื่อมต่อ Gemini เพื่อวิเคราะห์ข้อมูลของคุณ...</div>';
 
-            // Construct Prompt
-            // Select critical fields to save token space
+            // Select only necessary fields to save tokens
             const minimalData = globalRFMData.map(d => ({
-                segment: d.segment,
-                users: d.Count_User_Segment,
-                pct_users: d.Percentage_User_Segment,
-                spend: d.ValueSpend,
-                pct_spend: d.Percentage_ValueSpend,
-                avg_R: d.Avg_R,
-                med_F: d.Median_F,
-                avg_M: d.Avg_M
+                segment: d.segment, users: d.Count_User_Segment, spend: d.ValueSpend,
+                R: d.Avg_R, F: d.Median_F, M: d.Avg_M
             }));
 
             const prompt = `
-                Role: คุณคือนักการตลาดอาวุโสที่เชี่ยวชาญด้าน Data Analytics และ CRM
-                Task: วิเคราะห์ข้อมูล RFM Segmentation ของลูกค้าจากข้อมูล JSON ด้านล่างนี้ และให้คำแนะนำเชิงกลยุทธ์
-                
+                Role: Senior Marketing Strategist.
+                Task: Analyze this RFM data and provide strategic recommendations.
                 Data: ${JSON.stringify(minimalData)}
-
-                Requirement:
-                กรุณาวิเคราะห์และตอบเป็นภาษาไทย โดยจัดรูปแบบ Markdown ให้อ่านง่าย หัวข้อชัดเจน ดังนี้:
-                1. **Executive Summary**: สรุปภาพรวมสุขภาพของฐานลูกค้า (Health Check) สัดส่วนลูกค้าดี vs ลูกค้าเสีย
-                2. **Strategic Opportunities**: เจาะลึกกลุ่มที่มีศักยภาพสูงสุด (เช่น Champions, Loyal) ควรทำแคมเปญแบบไหนเพื่อเพิ่มยอดขาย (Upsell/Cross-sell)
-                3. **Critical Risks**: ระบุกลุ่มที่น่าเป็นห่วง (เช่น Cannot Lose, At Risk) และวิธีกู้คืน (Win-back Strategy) ที่เป็นรูปธรรม
-                4. **Action Plan**: แนะนำ 3 สิ่งที่ควรทำทันทีในสัปดาห์หน้า
-                
-                Tone: มืออาชีพ, จริงจัง, เน้น Insight ที่นำไปใช้ได้จริง (Actionable)
+                Language: Thai (ภาษาไทย).
+                Output Format: Markdown.
+                Content:
+                1. **Executive Summary**: Overview of customer health.
+                2. **Deep Dive**: Identify Champions vs Risk groups.
+                3. **Strategic Actions**: 3 key marketing actions to take next week.
             `;
 
             try {
+                // Call Gemini 2.5 Flash
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
                 const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error.message);
-                }
+                if (data.error) throw new Error(data.error.message);
 
                 const aiText = data.candidates[0].content.parts[0].text;
-                
-                // Render Markdown
                 aiResultDiv.innerHTML = `<div class="ai-result">${marked.parse(aiText)}</div>`;
 
             } catch (error) {
-                aiResultDiv.innerHTML = `<div style="color:red; text-align:center; padding:20px;">
-                    <i class="fas fa-exclamation-circle"></i> เกิดข้อผิดพลาด: ${error.message}<br>
-                    โปรดตรวจสอบ API Key หรือลองใหม่อีกครั้ง
-                </div>`;
+                aiResultDiv.innerHTML = `<div style="color:red; text-align:center; padding:20px;"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</div>`;
             } finally {
                 btnAnalyze.disabled = false;
                 btnAnalyze.innerHTML = '<i class="fas fa-magic"></i> วิเคราะห์ข้อมูลเชิงลึก';
@@ -822,25 +528,17 @@
         document.getElementById('csvFile').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if(!file) return;
-
-            document.getElementById('fileStatus').innerText = "กำลังประมวลผลไฟล์...";
-
+            document.getElementById('fileStatus').innerText = "กำลังประมวลผล...";
+            
             Papa.parse(file, {
-                header: true,
-                dynamicTyping: false,
-                skipEmptyLines: true,
+                header: true, dynamicTyping: false, skipEmptyLines: true,
                 complete: function(results) {
                     const validData = results.data.filter(r => r.segment && r.segment.trim() !== "");
                     if(validData.length > 0) {
-                        globalRFMData = validData; // Store globally for AI
+                        globalRFMData = validData;
                         renderCharts(validData);
                         renderDashboard(validData);
-                    } else {
-                        alert("ไม่พบข้อมูล Segment ในไฟล์ CSV");
-                    }
-                },
-                error: function(err) {
-                    alert("Error: " + err.message);
+                    } else { alert("ไม่พบข้อมูล Segment"); }
                 }
             });
         });
