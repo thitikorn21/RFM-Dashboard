@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFM Dashboard + AI Analyst (Updated)</title>
+    <title>RFM Dashboard + AI Analyst (Log Scale)</title>
     <!-- Google Font: Kanit -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <!-- PapaParse for CSV -->
@@ -105,7 +105,7 @@
             font-size: 0.9rem; color: #059669; font-weight: 500; min-height: 20px;
         }
 
-        /* --- AI Analyst Section (New Feature) --- */
+        /* --- AI Analyst Section --- */
         .ai-section {
             max-width: 1400px;
             margin: 0 auto 30px auto;
@@ -266,7 +266,7 @@
         </div>
     </header>
 
-    <!-- AI Analyst Section (ต้องมีส่วนนี้ครับ) -->
+    <!-- AI Analyst Section -->
     <section class="ai-section">
         <div class="ai-header">
             <div class="ai-title">
@@ -372,13 +372,56 @@
             const revenues = sortedData.map(d => parseVal(d.ValueSpend));
             const bgColors = sortedData.map(d => getSegmentStyle(d.segment).hex);
 
-            // 1. User Chart
+            // 1. User Chart (Logarithmic Scale Update)
             const ctxUser = document.getElementById('userChart').getContext('2d');
             if (userChartInstance) userChartInstance.destroy();
+            
+            // Log scale safety: ensure values are > 0 (use 0.1 for 0 values, they won't show on log >1)
+            const safeData = userCounts.map(v => v <= 0 ? 0.1 : v);
+
             userChartInstance = new Chart(ctxUser, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Users', data: userCounts, backgroundColor: bgColors, borderWidth: 1, borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Users',
+                        data: safeData,
+                        backgroundColor: bgColors,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8, // Make bars thicker
+                        categoryPercentage: 0.9
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                // Show original value, not log-safe value
+                                label: function(context) {
+                                    const rawVal = userCounts[context.dataIndex];
+                                    return `Users: ${formatNum(rawVal)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic', // Use Log Scale for visibility
+                            grid: { display: false },
+                            title: { display: true, text: 'จำนวนลูกค้า (Logarithmic Scale)', font: { size: 10 } },
+                            min: 1 // Start axis at 1
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 }, autoSkip: false }
+                        }
+                    }
+                }
             });
 
             // 2. Revenue Chart
@@ -484,7 +527,6 @@
             btnAnalyze.innerHTML = '<div class="loader"></div> กำลังวิเคราะห์...';
             aiResultDiv.innerHTML = '<div style="text-align:center; padding:30px; color:#6b7280;">กำลังเชื่อมต่อ Gemini เพื่อวิเคราะห์ข้อมูลของคุณ...</div>';
 
-            // Select only necessary fields to save tokens
             const minimalData = globalRFMData.map(d => ({
                 segment: d.segment, users: d.Count_User_Segment, spend: d.ValueSpend,
                 R: d.Avg_R, F: d.Median_F, M: d.Avg_M
@@ -503,7 +545,6 @@
             `;
 
             try {
-                // Call Gemini 2.5 Flash
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
