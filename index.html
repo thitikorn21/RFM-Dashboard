@@ -3,586 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFM Dashboard + AI Analyst (Log Scale)</title>
-    <!-- Google Font: Kanit -->
+    <title>RFM Analytics Dashboard (Cloud Run Connected)</title>
+    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- PapaParse for CSV -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Marked.js for Markdown Rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
-        :root {
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --ai-primary: #7c3aed; /* Violet */
-            --ai-light: #ede9fe;
-        }
-
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            color: var(--text-primary);
-        }
-
-        /* Header Section */
-        header {
-            max-width: 1400px;
-            margin: 0 auto 30px auto;
-            text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid #e5e7eb;
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 5px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-        }
-
-        h1 {
-            margin: 0 0 10px 0;
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 1.8rem;
-        }
-
-        p.subtitle { margin: 0; color: var(--text-secondary); font-weight: 300; }
-
-        .controls {
-            margin-top: 25px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        /* Upload Button */
-        .upload-container {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-
-        .btn-upload {
-            background-color: #2563eb;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-            transition: all 0.2s;
-        }
-
-        .btn-upload:hover { background-color: #1d4ed8; transform: translateY(-1px); }
-
-        .upload-container input[type=file] {
-            font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-        }
-
-        .file-status {
-            font-size: 0.9rem; color: #059669; font-weight: 500; min-height: 20px;
-        }
-
-        /* --- AI Analyst Section --- */
-        .ai-section {
-            max-width: 1400px;
-            margin: 0 auto 30px auto;
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .ai-header {
-            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-            padding: 20px 25px;
-            border-bottom: 1px solid #ddd6fe;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .ai-title {
-            display: flex; align-items: center; gap: 12px;
-            font-size: 1.25rem; font-weight: 600; color: #5b21b6;
-        }
+        :root { --bg: #f3f4f6; --primary: #2563eb; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1f2937; }
         
-        .ai-badge {
-            background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase;
-        }
-
-        .ai-input-group {
-            display: flex; gap: 10px; flex-grow: 1; max-width: 600px;
-        }
-
-        .ai-input {
-            flex-grow: 1; padding: 10px 15px; border: 1px solid #ddd6fe; border-radius: 8px; outline: none; font-family: 'Kanit', sans-serif;
-            transition: border-color 0.2s;
-        }
+        /* Header & Layout */
+        header { max-width: 1400px; margin: 0 auto 20px; text-align: center; background: white; padding: 25px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #e5e7eb; position: relative; overflow: hidden; }
+        header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+        .controls-card { max-width: 1400px; margin: 0 auto 20px; background: white; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #e5e7eb; }
         
-        .ai-input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+        /* Tabs */
+        .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 24px; border-radius: 8px; cursor: pointer; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 500; transition: 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .input-group { display: none; flex-direction: column; align-items: center; gap: 15px; }
+        .input-group.active { display: flex; }
+        
+        .url-input { width: 100%; max-width: 600px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Kanit'; font-size: 1rem; }
+        .btn-primary { background: var(--primary); color: white; padding: 10px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .btn-primary:hover { background: #1d4ed8; }
 
-        .btn-ai {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 500;
-            display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap;
-        }
+        /* Filter Bar */
+        .filter-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+        .filter-select { padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5db; font-family: 'Kanit'; min-width: 200px; background: #f9fafb; }
 
-        .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
-        .btn-ai:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
-
-        .ai-content {
-            padding: 30px; min-height: 120px; line-height: 1.7; color: #374151; font-size: 1rem;
-            background-color: #ffffff;
-        }
-
-        /* Markdown Styles within AI Result */
-        .ai-result h2 { color: #4c1d95; margin-top: 1.5em; margin-bottom: 0.5em; border-bottom: 2px solid #f3f4f6; padding-bottom: 5px; font-size: 1.4rem; }
-        .ai-result h3 { color: #5b21b6; margin-top: 1.2em; font-size: 1.2rem; }
-        .ai-result ul { padding-left: 20px; margin-bottom: 1em; }
-        .ai-result li { margin-bottom: 6px; }
-        .ai-result strong { color: #1e1b4b; font-weight: 600; }
-        .ai-result p { margin-bottom: 1em; }
-
-        /* Loader */
-        .loader {
-            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white;
-            width: 18px; height: 18px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Charts & Cards */
-        .charts-container {
-            max-width: 1400px; margin: 0 auto 30px auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
-        }
+        /* Charts */
+        .charts-container { max-width: 1400px; margin: 0 auto 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         .chart-full { grid-column: 1 / -1; }
-        
-        .chart-card {
-            background: white; border-radius: 16px; padding: 24px; box-shadow: var(--shadow);
-            height: 420px; position: relative; border: 1px solid #e5e7eb;
-        }
-        
-        .dashboard-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 24px; max-width: 1400px; margin: 0 auto;
-        }
+        .chart-card { background: white; border-radius: 16px; padding: 20px; box-shadow: var(--shadow); height: 400px; position: relative; border: 1px solid #e5e7eb; }
 
-        .card {
-            background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
-            transition: transform 0.2s; border: 1px solid #e5e7eb; display: flex; flex-direction: column;
-        }
-        .card:hover { transform: translateY(-5px); }
-        
-        .card-header { padding: 16px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
-        .seg-name { font-size: 1.1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
-        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-        
-        .definition-box {
-            background-color: #f9fafb; padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #4b5563;
-            margin-bottom: 20px; min-height: 50px; display: flex; align-items: center; border: 1px solid #f3f4f6;
-        }
+        /* Dashboard Cards */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; transition: transform 0.2s; border: 1px solid #e5e7eb; }
+        .card:hover { transform: translateY(-3px); }
+        .card-header { padding: 12px 15px; color: white; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+        .card-body { padding: 15px; }
 
-        .main-metrics {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;
-            border-bottom: 1px solid #f3f4f6; padding-bottom: 20px;
-        }
-        .metric-group h4 { margin: 0 0 6px 0; font-size: 0.75rem; text-transform: uppercase; color: #9ca3af; }
-        .metric-value { font-size: 1.35rem; font-weight: 600; color: #111827; }
-        .metric-sub { font-size: 0.85rem; color: #059669; font-weight: 500; }
-        .metric-group.right { text-align: right; }
+        .metric-block { display: flex; flex-direction: column; }
+        .metric-block.right { align-items: flex-end; text-align: right; }
+        .metric-val { font-size: 1.2rem; font-weight: 600; color: #111827; }
+        .metric-label { font-size: 0.8rem; color: #6b7280; }
+        .main-metrics { display: flex; justify-content: space-between; margin: 15px 0; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         
-        .rfm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto; }
-        .rfm-box { background-color: #f8fafc; border-radius: 8px; padding: 12px 5px; text-align: center; border: 1px solid #e2e8f0; }
-        .rfm-label { display: block; font-size: 0.7rem; color: #64748b; margin-bottom: 4px; font-weight: 600; }
-        .rfm-val { display: block; font-size: 1.1rem; font-weight: 600; color: #334155; }
+        /* Growth Badges */
+        .growth-badge { font-size: 0.75rem; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+        .growth-up { color: #059669; background: #d1fae5; }
+        .growth-down { color: #dc2626; background: #fee2e2; }
+        .growth-neutral { color: #6b7280; background: #f3f4f6; }
         
-        .icon-box { background: rgba(255,255,255,0.25); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .rfm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: center; font-size: 0.8rem; }
+        .rfm-box { background: #f9fafb; padding: 8px; border-radius: 6px; }
 
+        /* Loading */
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #2563eb; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         /* Dynamic Colors */
-        .bg-seq-1  { background: linear-gradient(135deg, #10b981 0%, #047857 100%); } 
-        .bg-seq-2  { background: linear-gradient(135deg, #34d399 0%, #059669 100%); } 
-        .bg-seq-3  { background: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%); } 
-        .bg-seq-4  { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); } 
-        .bg-seq-5  { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); }
-        .bg-seq-6  { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); } 
-        .bg-seq-7  { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); }
-        .bg-seq-8  { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); } 
-        .bg-seq-9  { background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%); }
-        .bg-seq-10 { background: linear-gradient(135deg, #e879f9 0%, #c026d3 100%); } 
-        .bg-seq-11 { background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%); } 
-        .bg-seq-12 { background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); }
-        .bg-seq-13 { background: linear-gradient(135deg, #9ca3af 0%, #4b5563 100%); } 
-        .bg-seq-default { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
-
-        @media (max-width: 900px) {
-            .charts-container { grid-template-columns: 1fr; }
-            .ai-header { flex-direction: column; align-items: stretch; }
-            .ai-input-group { max-width: 100%; }
-        }
+        .bg-seq-1 { background: #10b981; } .bg-seq-2 { background: #34d399; } .bg-seq-3 { background: #2dd4bf; }
+        .bg-seq-4 { background: #06b6d4; } .bg-seq-5 { background: #38bdf8; } .bg-seq-6 { background: #60a5fa; }
+        .bg-seq-7 { background: #818cf8; } .bg-seq-8 { background: #a78bfa; } .bg-seq-9 { background: #c084fc; }
+        .bg-seq-10 { background: #e879f9; } .bg-seq-11 { background: #fb7185; } .bg-seq-12 { background: #f472b6; } .bg-seq-13 { background: #9ca3af; }
     </style>
 </head>
 <body>
+    <div id="loadingOverlay"><div class="spinner"></div><div>กำลังโหลดข้อมูล...</div></div>
 
     <header>
-        <h1><i class="fas fa-chart-pie" style="color:#2563eb; margin-right:10px;"></i>RFM Analytics Dashboard</h1>
-        <p class="subtitle">ระบบวิเคราะห์และแสดงผลกลุ่มลูกค้าทั้ง 13 กลุ่ม + AI Analyst</p>
-        
-        <div class="controls">
-            <div class="upload-container">
-                <button class="btn-upload">
-                    <i class="fas fa-file-csv"></i> อัปโหลดไฟล์ CSV (13 Groups)
-                </button>
-                <input type="file" id="csvFile" accept=".csv" />
-            </div>
-            <div id="fileStatus" class="file-status">กรุณาอัปโหลดไฟล์ CSV เพื่อเริ่มใช้งาน</div>
-        </div>
+        <h1><i class="fas fa-chart-line"></i> RFM Dashboard (Cloud Run Ready)</h1>
+        <p style="color:#6b7280;">เชื่อมต่อข้อมูลผ่าน CSV หรือ Cloud Run API (Databricks/BigQuery)</p>
     </header>
 
-    <!-- AI Analyst Section -->
-    <section class="ai-section">
-        <div class="ai-header">
-            <div class="ai-title">
-                <i class="fas fa-robot"></i> The AI Analyst <span class="ai-badge">Gemini Powered</span>
-            </div>
-            <div class="ai-input-group">
-                <input type="password" id="apiKey" class="ai-input" placeholder="ใส่ Gemini API Key ที่นี่เพื่อเริ่มวิเคราะห์..." />
-                <button id="btnAnalyze" class="btn-ai" disabled>
-                    <i class="fas fa-magic"></i> วิเคราะห์ข้อมูลเชิงลึก
-                </button>
-            </div>
+    <div class="controls-card">
+        <div class="tabs">
+            <div class="tab-btn active" onclick="switchTab('csv')"><i class="fas fa-file-csv"></i> Upload CSV</div>
+            <div class="tab-btn" onclick="switchTab('api')"><i class="fas fa-cloud"></i> Connect API</div>
         </div>
-        <div id="aiResult" class="ai-content">
-            <div style="text-align: center; color: #9ca3af; padding: 20px;">
-                <i class="fas fa-lightbulb" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>
-                <p>1. อัปโหลดไฟล์ CSV ด้านบน<br>2. ใส่ Google Gemini API Key ในช่อง<br>3. กดปุ่มวิเคราะห์เพื่อรับคำแนะนำกลยุทธ์</p>
-            </div>
-        </div>
-    </section>
 
-    <!-- Charts Section -->
-    <div class="charts-container">
-        <div class="chart-card">
-            <div style="text-align:center; font-weight:600; margin-bottom:15px;">สัดส่วนลูกค้า (User Distribution)</div>
-            <div style="height: 340px; width: 100%;">
-                <canvas id="userChart"></canvas>
-            </div>
+        <!-- CSV Input -->
+        <div id="csvInput" class="input-group active">
+            <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="handleCSV(this)">
+            <button class="btn-primary" onclick="document.getElementById('csvFile').click()">
+                <i class="fas fa-upload"></i> เลือกไฟล์ CSV
+            </button>
         </div>
-        <div class="chart-card">
-            <div style="text-align:center; font-weight:600; margin-bottom:15px;">ยอดขายรวม (Revenue Share)</div>
-            <div style="height: 340px; width: 100%;">
-                <canvas id="revenueChart"></canvas>
-            </div>
+
+        <!-- API Input -->
+        <div id="apiInput" class="input-group">
+            <label style="font-size:0.9rem; color:#6b7280;">ใส่ Cloud Run URL (ต้องลงท้ายด้วย /api/rfm-data)</label>
+            <input type="text" id="apiUrl" class="url-input" placeholder="https://rfm-api-service-xyz.a.run.app/api/rfm-data">
+            <button class="btn-primary" onclick="fetchAPIData()"><i class="fas fa-sync"></i> ดึงข้อมูล API</button>
         </div>
-        <div class="chart-card chart-full">
-            <div style="text-align:center; font-weight:600; margin-bottom:15px;">RFM Strategic Matrix (Recency vs Frequency)</div>
-            <div style="height: 360px; width: 100%;">
-                <canvas id="bubbleChart"></canvas>
+
+        <div id="statusMsg" style="text-align:center; margin-top:10px; color:#059669; font-size:0.9rem;"></div>
+
+        <!-- Filters -->
+        <div id="filterSection" class="filter-bar" style="display:none;">
+            <div>
+                <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">งวดข้อมูล (Most_Round)</label>
+                <select id="roundFilter" class="filter-select" onchange="applyFilters()"></select>
             </div>
-            <div style="text-align: center; font-size: 0.8rem; color: #6b7280; margin-top: 10px;">
-                แกน X: Recency | แกน Y: Frequency | ขนาดวงกลม: ยอดขายรวม
+            <div>
+                <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">กลุ่มลูกค้า (Segment)</label>
+                <select id="segmentFilter" class="filter-select" onchange="applyFilters()"></select>
             </div>
         </div>
     </div>
 
+    <!-- Charts -->
+    <div class="charts-container">
+        <div class="chart-card">
+            <h3 style="text-align:center; font-size:1rem; margin-bottom:10px;">User Distribution (Log Scale)</h3>
+            <div style="height:340px;"><canvas id="userChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h3 style="text-align:center; font-size:1rem; margin-bottom:10px;">Revenue Share</h3>
+            <div style="height:340px;"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="chart-card chart-full">
+            <h3 style="text-align:center; font-size:1rem; margin-bottom:10px;">RFM Matrix</h3>
+            <div style="height:340px;"><canvas id="bubbleChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Cards -->
     <div id="dashboard" class="dashboard-grid">
-        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #9ca3af; background: white; border-radius: 16px; border: 2px dashed #e5e7eb;">
-            <i class="fas fa-cloud-upload-alt" style="font-size: 48px; margin-bottom: 20px;"></i>
-            <h3>รอการอัปโหลดไฟล์ CSV</h3>
+        <div style="grid-column:1/-1; text-align:center; padding:50px; color:#9ca3af;">
+            <i class="fas fa-cloud-download-alt" style="font-size:3rem; margin-bottom:15px;"></i>
+            <h3>รอข้อมูล...</h3>
         </div>
     </div>
 
     <script>
-        // Global Data Store for AI
-        let globalRFMData = [];
+        let allDataRaw = [], allRounds = [];
 
-        // --- Configuration ---
-        const segmentColors = [
-            '#10b981', '#34d399', '#2dd4bf', '#06b6d4', '#38bdf8', 
-            '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#e879f9', 
-            '#fb7185', '#f472b6', '#9ca3af'
-        ];
-
-        const formatBaht = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(num);
-        const formatNum = (num) => new Intl.NumberFormat('th-TH').format(num);
-
-        const getSegmentStyle = (segmentName) => {
-            const name = (segmentName || "").toString();
-            const match = name.match(/^(\d+)/); 
-            let seq = 0;
-            if (match && match[1]) seq = parseInt(match[1]);
-            else {
-                 if (name.includes('Champion')) seq = 1;
-                 else if (name.includes('Loyal')) seq = 2;
-                 else if (name.includes('New')) seq = 4;
-                 else seq = 13; 
+        function switchTab(mode) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.input-group').forEach(g => g.classList.remove('active'));
+            if(mode === 'csv') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('csvInput').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('apiInput').classList.add('active');
             }
-            if (seq < 1) seq = 13; if (seq > 13) seq = 13;
-            return { class: `bg-seq-${seq}`, hex: segmentColors[seq-1], icon: getIconBySeq(seq) };
-        };
-
-        const getIconBySeq = (seq) => {
-            if(seq <= 1) return 'fa-trophy';
-            if(seq <= 3) return 'fa-heart';
-            if(seq <= 5) return 'fa-thumbs-up';
-            if(seq <= 7) return 'fa-star-half-alt';
-            if(seq <= 9) return 'fa-exclamation-triangle';
-            if(seq <= 11) return 'fa-ambulance';
-            return 'fa-user-slash';
         }
 
-        // --- Chart Instances ---
-        let userChartInstance = null;
-        let revenueChartInstance = null;
-        let bubbleChartInstance = null;
+        function handleCSV(input) {
+            const file = input.files[0];
+            if(!file) return;
+            setLoading(true);
+            Papa.parse(file, { header: true, dynamicTyping: false, skipEmptyLines: true,
+                complete: res => { processData(res.data); setLoading(false); setStatus(`โหลด CSV: ${res.data.length} รายการ`); },
+                error: err => { alert(err.message); setLoading(false); }
+            });
+        }
 
-        const renderCharts = (data) => {
-            const sortedData = [...data].sort((a, b) => (parseInt(a.segment)||999) - (parseInt(b.segment)||999));
-            const labels = sortedData.map(d => d.segment);
-            const parseVal = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g, '')) : (v || 0);
+        async function fetchAPIData() {
+            const url = document.getElementById('apiUrl').value.trim();
+            if(!url) return alert("กรุณาใส่ URL API");
+            setLoading(true);
+            try {
+                const res = await fetch(url);
+                if(!res.ok) throw new Error("API Error: " + res.status);
+                const json = await res.json();
+                const rows = Array.isArray(json) ? json : (json.data || []);
+                if(!rows.length) throw new Error("ไม่พบข้อมูล");
+                processData(rows);
+                setStatus(`ดึง API สำเร็จ: ${rows.length} รายการ`);
+            } catch (e) { alert("เชื่อมต่อไม่ได้: " + e.message + "\n(ตรวจสอบ CORS หรือ URL)"); } 
+            finally { setLoading(false); }
+        }
+
+        function processData(rows) {
+            allDataRaw = rows.filter(d => d.segment).map(d => ({
+                ...d,
+                Count_User_Segment: cleanNum(d.Count_User_Segment),
+                ValueSpend: cleanNum(d.ValueSpend),
+                Avg_R: cleanNum(d.Avg_R), Median_F: cleanNum(d.Median_F), Avg_M: cleanNum(d.Avg_M),
+                Most_Round: d.Most_Round ? d.Most_Round.trim() : 'Unknown'
+            }));
+            setupFilters(allDataRaw);
+            applyFilters();
+        }
+
+        function cleanNum(v) {
+            if(typeof v === 'number') return v;
+            if(typeof v === 'string') return parseFloat(v.replace(/,/g, '')) || 0;
+            return 0;
+        }
+
+        function setupFilters(data) {
+            const rSel = document.getElementById('roundFilter');
+            const sSel = document.getElementById('segmentFilter');
             
-            const userCounts = sortedData.map(d => parseVal(d.Count_User_Segment));
-            const revenues = sortedData.map(d => parseVal(d.ValueSpend));
-            const bgColors = sortedData.map(d => getSegmentStyle(d.segment).hex);
+            allRounds = [...new Set(data.map(d => d.Most_Round))].sort().reverse();
+            rSel.innerHTML = `<option value="all">รวมทุกงวด</option>`;
+            allRounds.forEach((r, i) => rSel.innerHTML += `<option value="${r}">${r}${i===0?" (ล่าสุด)":""}</option>`);
+            if(allRounds.length) rSel.value = allRounds[0];
 
-            // 1. User Chart (Logarithmic Scale Update)
-            const ctxUser = document.getElementById('userChart').getContext('2d');
-            if (userChartInstance) userChartInstance.destroy();
+            const segs = [...new Set(data.map(d => d.segment))].sort((a,b)=>(parseInt(a)||99)-(parseInt(b)||99));
+            sSel.innerHTML = `<option value="all">ทั้งหมด</option>`;
+            segs.forEach(s => sSel.innerHTML += `<option value="${s}">${s}</option>`);
             
-            // Log scale safety: ensure values are > 0 (use 0.1 for 0 values, they won't show on log >1)
-            const safeData = userCounts.map(v => v <= 0 ? 0.1 : v);
+            document.getElementById('filterSection').style.display = 'flex';
+        }
 
-            userChartInstance = new Chart(ctxUser, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Users',
-                        data: safeData,
-                        backgroundColor: bgColors,
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        barPercentage: 0.8, // Make bars thicker
-                        categoryPercentage: 0.9
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                // Show original value, not log-safe value
-                                label: function(context) {
-                                    const rawVal = userCounts[context.dataIndex];
-                                    return `Users: ${formatNum(rawVal)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'logarithmic', // Use Log Scale for visibility
-                            grid: { display: false },
-                            title: { display: true, text: 'จำนวนลูกค้า (Logarithmic Scale)', font: { size: 10 } },
-                            min: 1 // Start axis at 1
-                        },
-                        y: {
-                            grid: { display: false },
-                            ticks: { font: { size: 11 }, autoSkip: false }
-                        }
-                    }
+        function applyFilters() {
+            const rVal = document.getElementById('roundFilter').value;
+            const sVal = document.getElementById('segmentFilter').value;
+            
+            let current = allDataRaw;
+            if(rVal !== 'all') current = current.filter(d => d.Most_Round === rVal);
+            if(sVal !== 'all') current = current.filter(d => d.segment === sVal);
+
+            let prevMap = {};
+            let showGrowth = false;
+            if(rVal !== 'all') {
+                const idx = allRounds.indexOf(rVal);
+                if(idx !== -1 && idx+1 < allRounds.length) {
+                    const prevData = allDataRaw.filter(d => d.Most_Round === allRounds[idx+1]);
+                    prevData.forEach(d => prevMap[d.segment] = d);
+                    showGrowth = true;
                 }
-            });
-
-            // 2. Revenue Chart
-            const ctxRev = document.getElementById('revenueChart').getContext('2d');
-            if (revenueChartInstance) revenueChartInstance.destroy();
-            revenueChartInstance = new Chart(ctxRev, {
-                type: 'doughnut',
-                data: { labels: labels, datasets: [{ data: revenues, backgroundColor: bgColors, borderWidth: 1 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } } }
-            });
-
-            // 3. Bubble Chart
-            const ctxBubble = document.getElementById('bubbleChart').getContext('2d');
-            if (bubbleChartInstance) bubbleChartInstance.destroy();
-            const maxRevenue = Math.max(...revenues);
-            const bubbleData = sortedData.map(d => {
-                const rev = parseVal(d.ValueSpend);
-                return { x: parseVal(d.Avg_R), y: parseVal(d.Median_F), r: Math.sqrt(rev/maxRevenue)*35+5, _spend: rev, _segment: d.segment };
-            });
-
-            bubbleChartInstance = new Chart(ctxBubble, {
-                type: 'bubble',
-                data: { datasets: bubbleData.map((b, i) => ({ label: b._segment, data: [b], backgroundColor: bgColors[i], borderColor: bgColors[i] })) },
-                options: {
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const raw = context.raw; return `${raw._segment}: R=${raw.x}, F=${raw.y}, Spend=${formatBaht(raw._spend)}`; } } } },
-                    scales: { x: { title: { display: true, text: 'Avg Recency' }, beginAtZero: true }, y: { title: { display: true, text: 'Median Frequency' }, beginAtZero: true } }
-                }
-            });
-        };
-
-        // --- Render Cards ---
-        const renderDashboard = (data) => {
-            const container = document.getElementById('dashboard');
-            container.innerHTML = '';
-            
-            const sortedData = [...data].sort((a, b) => (parseInt(a.segment)||999) - (parseInt(b.segment)||999));
-
-            if(sortedData.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px;">ไม่พบข้อมูล Segment</div>';
-                return;
             }
 
-            sortedData.forEach(item => {
-                const segName = item.segment || "Unknown";
-                const style = getSegmentStyle(segName);
-                const safeFloat = (v) => typeof v === 'string' ? parseFloat(v.replace(/,/g,'')) : (v || 0);
+            renderCharts(current);
+            renderCards(current, prevMap, showGrowth);
+        }
 
-                const users = safeFloat(item.Count_User_Segment);
-                const userPct = item.Percentage_User_Segment || "";
-                const spend = safeFloat(item.ValueSpend);
-                const spendPct = item.Percentage_ValueSpend || "";
+        function renderCards(data, prevMap, showGrowth) {
+            const container = document.getElementById('dashboard');
+            container.innerHTML = '';
+            const sorted = [...data].sort((a,b)=>(parseInt(a.segment)||99)-(parseInt(b.segment)||99));
+            
+            sorted.forEach(d => {
+                let uG = '', sG = '';
+                if(showGrowth && prevMap[d.segment]) {
+                    uG = calcGrowth(d.Count_User_Segment, prevMap[d.segment].Count_User_Segment);
+                    sG = calcGrowth(d.ValueSpend, prevMap[d.segment].ValueSpend);
+                }
+                const cls = `bg-seq-${Math.min(parseInt(d.segment)||13, 13)}`;
                 
-                const avgR = item.Avg_R !== undefined ? Math.round(safeFloat(item.Avg_R)) : '-';
-                const medF = item.Median_F !== undefined ? Math.round(safeFloat(item.Median_F)) : '-';
-                const avgM = item.Avg_M !== undefined ? Math.round(safeFloat(item.Avg_M)) : '-';
-
-                const html = `
+                container.innerHTML += `
                 <div class="card">
-                    <div class="card-header ${style.class}">
-                        <span class="seg-name" title="${segName}">${segName}</span>
-                        <div class="icon-box"><i class="fas ${style.icon}"></i></div>
+                    <div class="card-header ${cls}">
+                        <span>${d.segment}</span><span style="opacity:0.8; font-size:0.8rem;">${d.Most_Round}</span>
                     </div>
                     <div class="card-body">
-                        <div class="definition-box" title="${item.definition || ''}">
-                            ${item.definition ? (item.definition.length > 90 ? item.definition.substring(0,90)+'...' : item.definition) : '-'}
-                        </div>
                         <div class="main-metrics">
-                            <div class="metric-group"><h4>จำนวนลูกค้า</h4><div class="metric-value">${formatNum(users)}</div><div class="metric-sub">${userPct}</div></div>
-                            <div class="metric-group right"><h4>ยอดขายรวม</h4><div class="metric-value">${formatBaht(spend)}</div><div class="metric-sub">${spendPct}</div></div>
+                            <div class="metric-block">
+                                <span class="metric-label">Users</span>
+                                <span class="metric-val">${d.Count_User_Segment.toLocaleString()}</span>
+                                ${uG}
+                            </div>
+                            <div class="metric-block right">
+                                <span class="metric-label">Revenue</span>
+                                <span class="metric-val">${formatBaht(d.ValueSpend)}</span>
+                                ${sG}
+                            </div>
                         </div>
                         <div class="rfm-grid">
-                            <div class="rfm-box"><span class="rfm-label">Recency</span><span class="rfm-val">${avgR}</span></div>
-                            <div class="rfm-box"><span class="rfm-label">Freq</span><span class="rfm-val">${medF}</span></div>
-                            <div class="rfm-box"><span class="rfm-label">Monetary</span><span class="rfm-val">${formatNum(avgM)}</span></div>
+                            <div class="rfm-box">R: ${d.Avg_R}</div>
+                            <div class="rfm-box">F: ${d.Median_F}</div>
+                            <div class="rfm-box">M: ${d.Avg_M.toLocaleString()}</div>
                         </div>
                     </div>
                 </div>`;
-                container.innerHTML += html;
             });
+        }
 
-            document.getElementById('fileStatus').innerHTML = `<span style="color:#059669"><i class="fas fa-check-circle"></i> พร้อมวิเคราะห์ (${sortedData.length} กลุ่ม)</span>`;
-            checkAIReady();
-        };
+        function calcGrowth(curr, prev) {
+            if(!prev) return `<span class="growth-badge growth-neutral">-</span>`;
+            const diff = curr - prev;
+            const pct = (diff/prev)*100;
+            const cls = diff > 0 ? 'growth-up' : (diff < 0 ? 'growth-down' : 'growth-neutral');
+            const icon = diff > 0 ? 'fa-arrow-up' : (diff < 0 ? 'fa-arrow-down' : 'fa-minus');
+            return `<span class="growth-badge ${cls}"><i class="fas ${icon}"></i> ${Math.abs(pct).toFixed(1)}%</span>`;
+        }
 
-        // --- AI Logic (Gemini API) ---
-        const btnAnalyze = document.getElementById('btnAnalyze');
-        const apiKeyInput = document.getElementById('apiKey');
-        const aiResultDiv = document.getElementById('aiResult');
-
-        const checkAIReady = () => {
-            const hasData = globalRFMData.length > 0;
-            const hasKey = apiKeyInput.value.trim().length > 0;
-            btnAnalyze.disabled = !(hasData && hasKey);
-        };
-
-        apiKeyInput.addEventListener('input', checkAIReady);
-
-        btnAnalyze.addEventListener('click', async () => {
-            const apiKey = apiKeyInput.value.trim();
-            if (!apiKey || globalRFMData.length === 0) return;
-
-            btnAnalyze.disabled = true;
-            btnAnalyze.innerHTML = '<div class="loader"></div> กำลังวิเคราะห์...';
-            aiResultDiv.innerHTML = '<div style="text-align:center; padding:30px; color:#6b7280;">กำลังเชื่อมต่อ Gemini เพื่อวิเคราะห์ข้อมูลของคุณ...</div>';
-
-            const minimalData = globalRFMData.map(d => ({
-                segment: d.segment, users: d.Count_User_Segment, spend: d.ValueSpend,
-                R: d.Avg_R, F: d.Median_F, M: d.Avg_M
-            }));
-
-            const prompt = `
-                Role: Senior Marketing Strategist.
-                Task: Analyze this RFM data and provide strategic recommendations.
-                Data: ${JSON.stringify(minimalData)}
-                Language: Thai (ภาษาไทย).
-                Output Format: Markdown.
-                Content:
-                1. **Executive Summary**: Overview of customer health.
-                2. **Deep Dive**: Identify Champions vs Risk groups.
-                3. **Strategic Actions**: 3 key marketing actions to take next week.
-            `;
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
-
-                const aiText = data.candidates[0].content.parts[0].text;
-                aiResultDiv.innerHTML = `<div class="ai-result">${marked.parse(aiText)}</div>`;
-
-            } catch (error) {
-                aiResultDiv.innerHTML = `<div style="color:red; text-align:center; padding:20px;"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</div>`;
-            } finally {
-                btnAnalyze.disabled = false;
-                btnAnalyze.innerHTML = '<i class="fas fa-magic"></i> วิเคราะห์ข้อมูลเชิงลึก';
-            }
-        });
-
-        // --- Upload Logic ---
-        document.getElementById('csvFile').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            document.getElementById('fileStatus').innerText = "กำลังประมวลผล...";
+        let uChart, rChart, bChart;
+        function renderCharts(data) {
+            const agg = {};
+            data.forEach(d => {
+                if(!agg[d.segment]) agg[d.segment] = { segment: d.segment, users:0, spend:0, R:0, F:0, count:0 };
+                agg[d.segment].users += d.Count_User_Segment;
+                agg[d.segment].spend += d.ValueSpend;
+                agg[d.segment].R += d.Avg_R; agg[d.segment].F += d.Median_F; agg[d.segment].count++;
+            });
+            const final = Object.values(agg).map(d => ({...d, R:d.R/d.count, F:d.F/d.count})).sort((a,b)=>(parseInt(a.segment)||99)-(parseInt(b.segment)||99));
             
-            Papa.parse(file, {
-                header: true, dynamicTyping: false, skipEmptyLines: true,
-                complete: function(results) {
-                    const validData = results.data.filter(r => r.segment && r.segment.trim() !== "");
-                    if(validData.length > 0) {
-                        globalRFMData = validData;
-                        renderCharts(validData);
-                        renderDashboard(validData);
-                    } else { alert("ไม่พบข้อมูล Segment"); }
-                }
+            const labels = final.map(d => d.segment);
+            const users = final.map(d => d.users<=0?0.1:d.users);
+            const spends = final.map(d => d.spend);
+            const colors = final.map(d => getSegColor(d.segment));
+
+            const ctxU = document.getElementById('userChart').getContext('2d');
+            if(uChart) uChart.destroy();
+            uChart = new Chart(ctxU, {
+                type: 'bar', data: { labels, datasets: [{ data: users, backgroundColor: colors, borderRadius:4 }] },
+                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend:false }, scales: { x: { type: 'logarithmic', min:1, grid:{display:false} }, y: { grid:{display:false} } } }
             });
-        });
+
+            const ctxR = document.getElementById('revenueChart').getContext('2d');
+            if(rChart) rChart.destroy();
+            rChart = new Chart(ctxR, {
+                type: 'doughnut', data: { labels, datasets: [{ data: spends, backgroundColor: colors, borderWidth:1 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: {position:'right', labels:{boxWidth:10}} } }
+            });
+
+            const ctxB = document.getElementById('bubbleChart').getContext('2d');
+            if(bChart) bChart.destroy();
+            const maxS = Math.max(...spends)||1;
+            const bData = final.map((d,i) => ({ x:d.R, y:d.F, r: Math.sqrt(d.spend/maxS)*30+5, _seg:d.segment }));
+            bChart = new Chart(ctxB, {
+                type: 'bubble', data: { datasets: bData.map((b,i)=>({ label:b._seg, data:[b], backgroundColor:colors[i], borderColor:colors[i] })) },
+                options: { maintainAspectRatio: false, plugins: { legend:false, tooltip:{callbacks:{label: c=>`${c.raw._seg}: R=${c.raw.x.toFixed(1)}, F=${c.raw.y.toFixed(1)}`}} }, scales: { x: {title:{display:true, text:'Recency'}}, y: {title:{display:true, text:'Frequency'}} } }
+            });
+        }
+
+        function formatBaht(n) { return new Intl.NumberFormat('th-TH', {style:'currency', currency:'THB', maximumFractionDigits:0}).format(n); }
+        function getSegColor(n) { const i = (parseInt(n)||13)-1; const c = ['#10b981','#34d399','#2dd4bf','#06b6d4','#38bdf8','#60a5fa','#818cf8','#a78bfa','#c084fc','#e879f9','#fb7185','#f472b6','#9ca3af']; return c[i%13]; }
+        function setLoading(s) { document.getElementById('loadingOverlay').style.display = s ? 'flex' : 'none'; }
+        function setStatus(m) { document.getElementById('statusMsg').innerText = m; }
     </script>
 </body>
 </html>
